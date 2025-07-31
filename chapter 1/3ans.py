@@ -4,7 +4,7 @@ import MeCab
 import re
 from collections import Counter
 import matplotlib.pyplot as plt
-import japanize_matplotlib
+import japanize_matplotlib #日本語フォントを出力するために必要
 
 def get_wikipedia_text(title):
     """Wikipediaからテキストを取得（エラーハンドリング付き）"""
@@ -76,6 +76,7 @@ def tokenize_with_mecab(text):
         surface = text_words.surface
         feature = text_words.feature.split(",")
         if feature[0] == '名詞':
+             # 日本語文字（ひらがな、カタカナ、漢字）のみの名詞を抽出
              if re.fullmatch(r'[ぁ-んァ-ヴー一-龯]+', surface):
                wakati_text.append(surface)
              else:
