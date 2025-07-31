@@ -3,6 +3,8 @@ import time
 import MeCab
 import re
 from collections import Counter
+import matplotlib.pyplot as plt
+import japanize_matplotlib
 
 def get_wikipedia_text(title):
     """Wikipediaからテキストを取得（エラーハンドリング付き）"""
@@ -74,16 +76,46 @@ def tokenize_with_mecab(text):
         surface = text_words.surface
         feature = text_words.feature.split(",")
         if feature[0] == '名詞':
-            if re.fullmatch(r'[0-9]+', surface):
+             if re.fullmatch(r'[ぁ-んァ-ヴー一-龯]+', surface):
+               wakati_text.append(surface)
+             else:
                 pass
-            else:
-                wakati_text.append(surface)
         text_words = text_words.next
     return wakati_text
 
 if all_japan_texts:
     combined_text = ' '.join(all_japan_texts)
-    result = tokenize_with_mecab(combined_text)
-    print("トークン化結果:", result)
+    mecab_text = tokenize_with_mecab(combined_text)
+    counter = Counter(mecab_text)
+    
+    # 上位20位まで表示
+    print("=== 単語頻度ランキング（上位20位）===")
+    for i, (word, count) in enumerate(counter.most_common(20)):
+        print(f"{i + 1}位：{word}: {count}")
+    
+    # ジップの法則のグラフ化
+    print("\n=== ジップの法則のグラフを表示中 ===")
+    most_common = counter.most_common()
+    ranks = list(range(1, len(most_common) + 1))  # 順位: 1, 2, 3...
+    frequencies = [count for _, count in most_common]  # 頻度
+    
+    # 両対数グラフでプロット
+    plt.figure(figsize=(10, 6))
+    plt.loglog(ranks, frequencies, 'bo-', markersize=3)
+    plt.xlabel('順位 (Rank)', fontsize=12)
+    plt.ylabel('頻度 (Frequency)', fontsize=12, rotation='horizontal')
+    plt.title('ジップの法則の検証 - 日本語Wikipedia記事', fontsize=14)
+    plt.grid(True, alpha=0.3)
+    
+    # 理論曲線も表示（比較用）
+    theoretical = [frequencies[0] / r for r in ranks]
+    plt.loglog(ranks, theoretical, 'r--', alpha=0.7, label='理論曲線 (1/rank)')
+    plt.legend()
+    
+    plt.tight_layout()
+    plt.show()
+    
+    print(f"総単語数: {len(mecab_text)}")
+    print(f"ユニーク単語数: {len(counter)}")
 else:
     print("テキストを取得できませんでした")
