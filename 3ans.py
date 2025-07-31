@@ -1,5 +1,8 @@
 import requests
 import time
+import MeCab
+import re
+from collections import Counter
 
 def get_wikipedia_text(title):
     """Wikipediaからテキストを取得（エラーハンドリング付き）"""
@@ -55,12 +58,32 @@ for article in japan_articles:
     else:
         print(f"失敗")
     print("-" * 30)
-    
+
     # API制限を避けるため3秒待機
-    time.sleep(30)
+    time.sleep(20)
+
+tagger = MeCab.Tagger()
+tagger.parse('')
+
+def tokenize_with_mecab(text):
+    """Mecabを使用してテキストをトークン化"""
+    text_words = tagger.parseToNode(text)
+    text_words = text_words.next
+    wakati_text = []
+    while text_words:
+        surface = text_words.surface
+        feature = text_words.feature.split(",")
+        if feature[0] == '名詞':
+            if re.fullmatch(r'[0-9]+', surface):
+                pass
+            else:
+                wakati_text.append(surface)
+        text_words = text_words.next
+    return wakati_text
 
 if all_japan_texts:
     combined_text = ' '.join(all_japan_texts)
-    print(f"総テキスト長: {len(combined_text)}文字")
+    result = tokenize_with_mecab(combined_text)
+    print("トークン化結果:", result)
 else:
     print("テキストを取得できませんでした")
